@@ -1,6 +1,7 @@
-"""Embedding backends. Pick one with EMBEDDER=fake|bedrock in .env."""
+"""Embedding backends. Pick one with EMBEDDER=fake|ollama|bedrock in .env."""
 import hashlib
 import json
+import urllib.request
 from typing import Protocol
 
 import numpy as np
@@ -54,11 +55,38 @@ class BedrockEmbedder:
         return json.loads(response["body"].read())["embedding"]
 
 
+class OllamaEmbedder:
+    """Local embeddings via Ollama (free, runs on your machine)."""
+
+    name = "ollama"
+
+    def __init__(self, model: str, base_url: str, dim: int):
+        self.model = model
+        self.url = f"{base_url.rstrip('/')}/api/embed"
+        self.dim = dim
+
+    def embed(self, text: str) -> list[float]:
+        request = urllib.request.Request(
+            self.url,
+            data=json.dumps({"model": self.model, "input": text}).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(request, timeout=60) as response:
+            vec = json.loads(response.read())["embeddings"][0]
+        if len(vec) != self.dim:
+            raise ValueError(
+                f"{self.model} returned {len(vec)} dims but the DB expects {self.dim}"
+            )
+        return vec
+
+
 def get_embedder() -> Embedder:
+    if settings.embedder == "ollama":
+        return OllamaEmbedder(settings.ollama_embed_model, settings.ollama_url, settings.embedding_dim)
     if settings.embedder == "bedrock":
         return BedrockEmbedder(
             settings.embedding_model_id, settings.aws_region, settings.embedding_dim
         )
     if settings.embedder == "fake":
         return FakeEmbedder(settings.embedding_dim)
-    raise ValueError(f"Unknown EMBEDDER {settings.embedder!r} (expected 'fake' or 'bedrock')")
+    raise ValueError(f"Unknown EMBEDDER {settings.embedder!r} (expected 'fake', 'ollama' or 'bedrock')")

@@ -11,8 +11,10 @@ class Settings(BaseSettings):
     aws_region: str = "eu-west-1"
     bedrock_model_id: str = "anthropic.claude-3-sonnet-20240229-v1:0"
 
-    # Embeddings: "fake" (offline, for testing the pipeline) or "bedrock" (Titan v2)
+    # Embeddings: "fake" (random, pipeline testing), "ollama" (free, local) or "bedrock" (Titan v2)
     embedder: str = "fake"
+    ollama_url: str = "http://localhost:11434"
+    ollama_embed_model: str = "mxbai-embed-large"  # 1024 dims, matches the DB
     embedding_model_id: str = "amazon.titan-embed-text-v2:0"
     embedding_dim: int = 1024  # must match VECTOR(1024) in db/init.sql
 
