@@ -1,15 +1,15 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from app.db import open_pool, close_pool, db_healthy
 
-from app.config import settings
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    open_pool()
+    yield
+    close_pool()
 
-app = FastAPI(
-    title=settings.app_name,
-    description="Retrieves relevant runbook content and suggests root causes/next "
-    "steps for production incidents.",
-    version="0.1.0",
-)
-
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/health")
-def health_check():
-    return {"status": "ok", "environment": settings.environment}
+def health():
+    return {"status": "ok", "db": "ok" if db_healthy() else "down"}
