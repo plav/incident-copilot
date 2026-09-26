@@ -1,17 +1,13 @@
 """Postgres connection pool with pgvector registered."""
-import os
 from contextlib import contextmanager
 
 from pgvector.psycopg import register_vector
 from psycopg_pool import ConnectionPool
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://copilot:copilot@localhost:5432/incident_copilot",
-)
+from app.config import settings
 
 pool = ConnectionPool(
-    DATABASE_URL,
+    settings.database_url,
     min_size=1,
     max_size=5,
     configure=register_vector,
