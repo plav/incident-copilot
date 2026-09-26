@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     embedding_model_id: str = "amazon.titan-embed-text-v2:0"
     embedding_dim: int = 1024  # must match VECTOR(1024) in db/init.sql
 
+    # LLM for /triage: "ollama" (free, local) or "fake" (fixed stub answer)
+    llm: str = "ollama"
+    ollama_chat_model: str = "llama3.2"
+
     # Database
     database_url: str = "postgresql://copilot:copilot@localhost:5433/incident_copilot"
 
