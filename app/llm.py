@@ -20,6 +20,7 @@ class OllamaLLM:
     def __init__(self, model: str, base_url: str):
         self.model = model
         self.url = f"{base_url.rstrip('/')}/api/chat"
+        self.name = f"ollama/{model}"
 
     def generate_json(self, system: str, user: str, schema: dict) -> str:
         payload = {
