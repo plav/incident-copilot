@@ -47,7 +47,7 @@ def chunk_runbook(path: Path) -> list[Chunk]:
     sections = [
         (heading.strip(), body.strip())
         for heading, body in zip(parts[1::2], parts[2::2])
-        if body.strip()
+        if body.strip() and heading.strip().lower() != "source tickets"
     ]
 
     # A runbook with no "## " headings becomes a single chunk
