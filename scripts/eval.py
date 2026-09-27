@@ -4,6 +4,7 @@ Usage (from the repo root, venv active, DB + Ollama running):
     python -m scripts.eval                     # retrieval + triage
     python -m scripts.eval --retrieval-only    # fast: skips the LLM
     OLLAMA_CHAT_MODEL=llama3.2 python -m scripts.eval   # compare another model
+    python -m scripts.eval --cases private/incidents.json   # a different test set
 
 Metrics:
     retrieval hit@1 / hit@3: is the expected runbook the best / in the top 3
@@ -126,6 +127,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Evaluate retrieval and triage")
     parser.add_argument("--retrieval-only", action="store_true", help="skip the LLM (fast)")
     parser.add_argument("--k", type=int, default=8, help="chunks to retrieve per case")
+    parser.add_argument("--cases", type=Path, default=CASES_FILE, help="JSON file of test incidents")
     args = parser.parse_args()
 
     from app.config import settings
@@ -136,11 +138,11 @@ def main() -> int:
     if not args.retrieval_only:
         from app.triage import triage as triage_fn
 
-    cases = json.loads(CASES_FILE.read_text())
+    cases = json.loads(args.cases.read_text())
     label = f"embedder={settings.embedder}/{settings.ollama_embed_model}"
     if triage_fn:
         label += f"  llm={settings.llm}/{settings.ollama_chat_model}"
-    print(f"Running {len(cases)} cases  |  {label}")
+    print(f"Running {len(cases)} cases from {args.cases}  |  {label}")
 
     open_pool()
     try:
@@ -154,9 +156,11 @@ def main() -> int:
     summary = summarise(results)
     print_report(results, summary, label)
 
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    # Results go next to the cases file, so private runs stay in the private folder
+    results_dir = RESULTS_DIR if args.cases == CASES_FILE else args.cases.parent / "results"
+    results_dir.mkdir(parents=True, exist_ok=True)
     model = settings.ollama_chat_model if triage_fn else "retrieval-only"
-    out = RESULTS_DIR / f"{datetime.now():%Y%m%d-%H%M}-{model.replace(':', '-')}.json"
+    out = results_dir / f"{datetime.now():%Y%m%d-%H%M}-{model.replace(':', '-')}.json"
     out.write_text(json.dumps({"label": label, "summary": summary, "results": results}, indent=2))
     print(f"\nSaved {out}")
     return 0

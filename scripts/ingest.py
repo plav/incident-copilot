@@ -3,6 +3,10 @@
 Usage (from the repo root, venv active, DB running):
     python -m scripts.ingest            # embed new/changed chunks only
     python -m scripts.ingest --force    # re-embed everything (e.g. after switching embedder)
+    python -m scripts.ingest --dir private/runbooks   # ingest a different folder
+
+The database mirrors the folder you ingest: runbooks from a previous folder are
+removed. Re-run with the other folder to switch back.
 
 Each runbook is split on its "## " headings, one chunk per section. The text
 that gets embedded is prefixed with the runbook title and section name, so a
@@ -136,10 +140,11 @@ def ingest(conn, embedder, chunks: list[Chunk], force: bool = False) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Ingest runbooks into pgvector")
     parser.add_argument("--force", action="store_true", help="re-embed every chunk")
+    parser.add_argument("--dir", type=Path, default=RUNBOOKS_DIR, help="folder of runbook .md files")
     args = parser.parse_args()
 
-    if not RUNBOOKS_DIR.is_dir():
-        print(f"No {RUNBOOKS_DIR}/ folder here. Run this from the repo root.")
+    if not args.dir.is_dir():
+        print(f"No {args.dir}/ folder here. Run this from the repo root.")
         return 1
 
     import psycopg
@@ -149,9 +154,12 @@ def main() -> int:
     from app.embeddings import get_embedder
 
     embedder = get_embedder()
-    chunks = load_chunks()
+    chunks = load_chunks(args.dir)
     files = len({c.source_file for c in chunks})
-    print(f"Embedder: {embedder.name} | {len(chunks)} chunks from {files} runbooks")
+    if not chunks:
+        print(f"No runbooks found in {args.dir}/ - nothing ingested, database unchanged.")
+        return 1
+    print(f"Embedder: {embedder.name} | {len(chunks)} chunks from {files} runbooks in {args.dir}/")
 
     with psycopg.connect(settings.database_url) as conn:  # commits on success, rolls back on error
         register_vector(conn)
