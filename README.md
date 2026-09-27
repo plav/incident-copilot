@@ -4,7 +4,7 @@ An AI assistant for on-call engineers. Describe a production incident in plain E
 
 Built with **FastAPI**, **PostgreSQL + pgvector**, and **local LLMs via Ollama**, so it runs entirely on a laptop at zero cost. The embedding and LLM layers are provider-agnostic, and **AWS Bedrock** is supported as a drop-in alternative.
 
-> **Status:** RAG pipeline complete and evaluated: **88% triage accuracy** on a 17-incident labelled eval set with a free local 7B model. Next up: out-of-scope detection, then agentic tool-calling. See [Roadmap](#roadmap).
+> **Status:** RAG pipeline complete and evaluated on two datasets: **88%** triage accuracy on a synthetic eval set, and **89% on real production incidents** from a live support team, with a free local 7B model. Next up: out-of-scope detection, then agentic tool-calling. See [Roadmap](#roadmap).
 
 ---
 
@@ -230,6 +230,63 @@ Retrieval: **hit@1 13/15 (87%)**, **hit@3 14/15 (93%)**.
 - **Retrieval sets the ceiling.** On `oom-03`, the correct runbook wasn't in the top 3, so no model could answer correctly. Further gains there have to come from retrieval.
 - **Out-of-scope detection is the weakest area.** Both models mapped the expired-certificate incident to an unrelated runbook with confidence.
 
+### Real-world validation
+
+The synthetic runbooks and incidents above were written for this project, so they're tidier than real ones. To test against the real thing, the pipeline was run on a **production support team's actual incident history**, entirely on a laptop with local models, so no data left the machine.
+
+**Method**
+1. **Runbooks from history.** The team's AI assistant (Atlassian Rovo) drafted four runbooks from a year of resolved incident tickets: pipeline out-of-memory failures, file ingestion failures, transaction-matching failures and missing-data query failures. Each one was reviewed before use.
+2. **A time-based split to prevent leakage.** The runbooks were built only from tickets **older** than a cut-off date. The test set is **22 real incidents from the two months after it**, rewritten as the first report an engineer would see (symptoms and error messages, with the cause and all identifying details removed). The runbooks never saw these incidents.
+3. **Out-of-scope cases.** Three of the 22 are recent incidents that fit none of the runbooks.
+
+**Results** (`qwen2.5:7b`, `mxbai-embed-large`)
+
+| | Result |
+|---|---|
+| **Real incidents: triage accuracy** | **17/19 (89%)** |
+| Retrieval hit@1 / hit@3 | 16/19 (84%) · **19/19 (100%)** |
+| Out-of-scope | 0/3 |
+| Avg time per triage | 42s |
+
+**Findings**
+- **Consistent with the synthetic set.** 89% on real incidents vs 88% on synthetic ones, and in both the LLM step recovered retrieval misses. On real data, 2 of the 3 incidents that search ranked wrong were still triaged correctly, because the right runbook was in the top 3.
+- **The eval surfaced a gap in a runbook, not just in the model.** One miss was an incident about records missing a field in matching output. The matching runbook never describes that symptom, but another runbook talks about "missing fields" a lot. The fix is to update the runbook. That's a useful side effect: if the copilot can't tell two runbooks apart, engineers probably struggle to as well.
+- **Some misses are fair.** One incident's first report ("feeds failed during ingress") contained no clue to its real cause. An experienced engineer would likely have guessed the same wrong runbook.
+- **Out-of-scope detection is the main weakness, confirmed on both datasets** (1/2 synthetic, 0/3 real). See below.
+
+### Why a similarity threshold isn't enough
+
+The obvious fix for out-of-scope incidents is to reject any incident whose best search score is below a threshold. The real-data scores show why that alone doesn't work:
+
+```
+0.525  out-of-scope   ← clearly lowest
+0.585  real
+0.592  real
+0.592  out-of-scope   ← tied with a real incident
+0.601  real
+0.649  real
+0.655  out-of-scope   ← higher than 4 real incidents
+0.678+ all real
+```
+
+A threshold of ~0.55 catches one out-of-scope case safely. Any higher starts rejecting real incidents. One out-of-scope incident, a failing background job described in the same language as the pipeline incidents, outscores four real ones. **Similarity measures how much an incident *sounds like* a runbook, not whether the runbook actually covers it.**
+
+The planned fix has two layers: a conservative threshold for the obvious cases, and an explicit "none of these fit" option for the LLM, which checks the incident against each runbook's Symptoms section before choosing.
+
+### Running the eval on your own runbooks
+
+Company runbooks and incidents go in `private/`, which is git-ignored:
+
+```bash
+# Split a pasted export of several runbooks into one file each (repairs lost headings)
+python -m scripts.split_runbooks private/export.txt private/runbooks
+
+python -m scripts.ingest --dir private/runbooks
+python -m scripts.eval --cases private/incidents.json   # results saved to private/results/
+```
+
+Run `python -m scripts.ingest` afterwards to switch back to the sample runbooks.
+
 Results for each run are saved to `evals/results/`.
 
 ---
@@ -254,7 +311,9 @@ incident-copilot/
 │   └── results/         # Saved eval runs
 ├── scripts/
 │   ├── ingest.py        # Chunk, embed and upsert runbooks
-│   └── eval.py          # Score retrieval and triage against the eval set
+│   ├── eval.py          # Score retrieval and triage against the eval set
+│   └── split_runbooks.py # Split and repair a pasted multi-runbook export
+├── private/             # Git-ignored: company runbooks, incidents and results
 ├── docker-compose.yml   # Postgres 16 + pgvector
 └── requirements.txt
 ```
@@ -270,8 +329,11 @@ incident-copilot/
 - [x] Structured triage endpoint with constrained citations
 - [x] Free local inference via Ollama
 - [x] Evaluation set: 17 labelled incidents scoring retrieval and triage, with model comparison
-- [ ] **Out-of-scope detection:** similarity threshold so the system says "no matching runbook" instead of guessing
-- [ ] Improve retrieval on the remaining miss (query prefix for the embedding model, hybrid keyword + vector search)
+- [x] Real-world validation: 22 held-out production incidents, 89% triage accuracy
+- [ ] **Out-of-scope detection:** conservative similarity threshold plus an explicit "none of these fit" option for the LLM
+- [ ] Improve retrieval on overlapping runbooks (query prefix for the embedding model, hybrid keyword + vector search)
+- [ ] **Confluence and Jira loaders:** ingest runbooks from Confluence and surface similar past incidents from Jira
+- [ ] **Knowledge-gap loop:** log out-of-scope incidents and draft new runbooks from them once resolved
 - [ ] Expand the runbook knowledge base (5 → 15–20), including deliberately overlapping topics
 - [ ] **Agentic tool-calling:** let the model check service status, query logs and inspect recent deploys before diagnosing
 - [ ] Tests and CI
