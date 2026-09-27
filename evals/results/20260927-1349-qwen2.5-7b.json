@@ -1,0 +1,337 @@
+{
+  "label": "embedder=ollama/mxbai-embed-large  llm=ollama/qwen2.5:7b",
+  "summary": {
+    "cases": 17,
+    "hit_at_1": 13,
+    "hit_at_3": 14,
+    "in_scope": 15,
+    "triage_correct": 15,
+    "avg_latency_s": 28.82,
+    "by_difficulty": {
+      "easy": "5/5",
+      "medium": "6/6",
+      "hard": "3/4",
+      "out-of-scope": "1/2"
+    }
+  },
+  "results": [
+    {
+      "id": "pool-01",
+      "difficulty": "easy",
+      "expected": "Database Connection Pool Exhaustion",
+      "retrieved": [
+        "Database Connection Pool Exhaustion",
+        "Third-Party API Timeout Cascade",
+        "Stale Cache Serving Incorrect Data"
+      ],
+      "top_score": 0.7409,
+      "hit_at_1": true,
+      "hit_at_3": true,
+      "predicted": "Database Connection Pool Exhaustion",
+      "confidence": "high",
+      "escalate": false,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 39.66
+    },
+    {
+      "id": "pool-02",
+      "difficulty": "medium",
+      "expected": "Database Connection Pool Exhaustion",
+      "retrieved": [
+        "Database Connection Pool Exhaustion",
+        "Third-Party API Timeout Cascade",
+        "Stale Cache Serving Incorrect Data"
+      ],
+      "top_score": 0.6675,
+      "hit_at_1": true,
+      "hit_at_3": true,
+      "predicted": "Database Connection Pool Exhaustion",
+      "confidence": "high",
+      "escalate": false,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 34.58
+    },
+    {
+      "id": "pool-03",
+      "difficulty": "medium",
+      "expected": "Database Connection Pool Exhaustion",
+      "retrieved": [
+        "Database Connection Pool Exhaustion",
+        "Third-Party API Timeout Cascade",
+        "Deployment Rollback Failure"
+      ],
+      "top_score": 0.7233,
+      "hit_at_1": true,
+      "hit_at_3": true,
+      "predicted": "Database Connection Pool Exhaustion",
+      "confidence": "high",
+      "escalate": false,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 30.1
+    },
+    {
+      "id": "api-01",
+      "difficulty": "easy",
+      "expected": "Third-Party API Timeout Cascade",
+      "retrieved": [
+        "Third-Party API Timeout Cascade",
+        "Stale Cache Serving Incorrect Data",
+        "Database Connection Pool Exhaustion"
+      ],
+      "top_score": 0.7116,
+      "hit_at_1": true,
+      "hit_at_3": true,
+      "predicted": "Third-Party API Timeout Cascade",
+      "confidence": "high",
+      "escalate": false,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 28.85
+    },
+    {
+      "id": "api-02",
+      "difficulty": "medium",
+      "expected": "Third-Party API Timeout Cascade",
+      "retrieved": [
+        "Third-Party API Timeout Cascade",
+        "Database Connection Pool Exhaustion"
+      ],
+      "top_score": 0.6324,
+      "hit_at_1": true,
+      "hit_at_3": true,
+      "predicted": "Third-Party API Timeout Cascade",
+      "confidence": "high",
+      "escalate": false,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 26.62
+    },
+    {
+      "id": "api-03",
+      "difficulty": "hard",
+      "expected": "Third-Party API Timeout Cascade",
+      "retrieved": [
+        "Database Connection Pool Exhaustion",
+        "Third-Party API Timeout Cascade",
+        "Stale Cache Serving Incorrect Data"
+      ],
+      "top_score": 0.7921,
+      "hit_at_1": false,
+      "hit_at_3": true,
+      "predicted": "Third-Party API Timeout Cascade",
+      "confidence": "medium",
+      "escalate": true,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 30.25
+    },
+    {
+      "id": "oom-01",
+      "difficulty": "easy",
+      "expected": "Memory Leak Causing OOM Restarts",
+      "retrieved": [
+        "Memory Leak Causing OOM Restarts",
+        "Database Connection Pool Exhaustion",
+        "Deployment Rollback Failure"
+      ],
+      "top_score": 0.7726,
+      "hit_at_1": true,
+      "hit_at_3": true,
+      "predicted": "Memory Leak Causing OOM Restarts",
+      "confidence": "high",
+      "escalate": false,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 31.78
+    },
+    {
+      "id": "oom-02",
+      "difficulty": "medium",
+      "expected": "Memory Leak Causing OOM Restarts",
+      "retrieved": [
+        "Memory Leak Causing OOM Restarts",
+        "Third-Party API Timeout Cascade",
+        "Database Connection Pool Exhaustion"
+      ],
+      "top_score": 0.6527,
+      "hit_at_1": true,
+      "hit_at_3": true,
+      "predicted": "Memory Leak Causing OOM Restarts",
+      "confidence": "high",
+      "escalate": false,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 32.68
+    },
+    {
+      "id": "oom-03",
+      "difficulty": "hard",
+      "expected": "Memory Leak Causing OOM Restarts",
+      "retrieved": [
+        "Stale Cache Serving Incorrect Data",
+        "Third-Party API Timeout Cascade",
+        "Database Connection Pool Exhaustion"
+      ],
+      "top_score": 0.6179,
+      "hit_at_1": false,
+      "hit_at_3": false,
+      "predicted": "Third-Party API Timeout Cascade",
+      "confidence": "medium",
+      "escalate": false,
+      "triage_correct": false,
+      "error": null,
+      "latency_s": 30.85
+    },
+    {
+      "id": "cache-01",
+      "difficulty": "easy",
+      "expected": "Stale Cache Serving Incorrect Data",
+      "retrieved": [
+        "Stale Cache Serving Incorrect Data",
+        "Database Connection Pool Exhaustion",
+        "Deployment Rollback Failure"
+      ],
+      "top_score": 0.6415,
+      "hit_at_1": true,
+      "hit_at_3": true,
+      "predicted": "Stale Cache Serving Incorrect Data",
+      "confidence": "high",
+      "escalate": false,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 29.02
+    },
+    {
+      "id": "cache-02",
+      "difficulty": "medium",
+      "expected": "Stale Cache Serving Incorrect Data",
+      "retrieved": [
+        "Stale Cache Serving Incorrect Data",
+        "Deployment Rollback Failure",
+        "Database Connection Pool Exhaustion"
+      ],
+      "top_score": 0.6073,
+      "hit_at_1": true,
+      "hit_at_3": true,
+      "predicted": "Stale Cache Serving Incorrect Data",
+      "confidence": "high",
+      "escalate": false,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 28.52
+    },
+    {
+      "id": "cache-03",
+      "difficulty": "hard",
+      "expected": "Stale Cache Serving Incorrect Data",
+      "retrieved": [
+        "Stale Cache Serving Incorrect Data",
+        "Third-Party API Timeout Cascade"
+      ],
+      "top_score": 0.6095,
+      "hit_at_1": true,
+      "hit_at_3": true,
+      "predicted": "Stale Cache Serving Incorrect Data",
+      "confidence": "high",
+      "escalate": false,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 26.16
+    },
+    {
+      "id": "deploy-01",
+      "difficulty": "easy",
+      "expected": "Deployment Rollback Failure",
+      "retrieved": [
+        "Deployment Rollback Failure",
+        "Memory Leak Causing OOM Restarts"
+      ],
+      "top_score": 0.706,
+      "hit_at_1": true,
+      "hit_at_3": true,
+      "predicted": "Deployment Rollback Failure",
+      "confidence": "high",
+      "escalate": false,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 24.35
+    },
+    {
+      "id": "deploy-02",
+      "difficulty": "medium",
+      "expected": "Deployment Rollback Failure",
+      "retrieved": [
+        "Deployment Rollback Failure",
+        "Database Connection Pool Exhaustion",
+        "Memory Leak Causing OOM Restarts"
+      ],
+      "top_score": 0.7031,
+      "hit_at_1": true,
+      "hit_at_3": true,
+      "predicted": "Deployment Rollback Failure",
+      "confidence": "high",
+      "escalate": true,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 30.43
+    },
+    {
+      "id": "deploy-03",
+      "difficulty": "hard",
+      "expected": "Deployment Rollback Failure",
+      "retrieved": [
+        "Deployment Rollback Failure",
+        "Memory Leak Causing OOM Restarts",
+        "Database Connection Pool Exhaustion"
+      ],
+      "top_score": 0.7432,
+      "hit_at_1": true,
+      "hit_at_3": true,
+      "predicted": "Deployment Rollback Failure",
+      "confidence": "high",
+      "escalate": false,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 28.42
+    },
+    {
+      "id": "none-01",
+      "difficulty": "out-of-scope",
+      "expected": null,
+      "retrieved": [
+        "Third-Party API Timeout Cascade",
+        "Stale Cache Serving Incorrect Data"
+      ],
+      "top_score": 0.5781,
+      "hit_at_1": null,
+      "hit_at_3": null,
+      "predicted": "Stale Cache Serving Incorrect Data",
+      "confidence": "medium",
+      "escalate": false,
+      "triage_correct": false,
+      "error": null,
+      "latency_s": 24.34
+    },
+    {
+      "id": "none-02",
+      "difficulty": "out-of-scope",
+      "expected": null,
+      "retrieved": [
+        "Third-Party API Timeout Cascade",
+        "Database Connection Pool Exhaustion"
+      ],
+      "top_score": 0.5804,
+      "hit_at_1": null,
+      "hit_at_3": null,
+      "predicted": null,
+      "confidence": null,
+      "escalate": true,
+      "triage_correct": true,
+      "error": null,
+      "latency_s": 13.28
+    }
+  ]
+}

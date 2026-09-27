@@ -1,0 +1,104 @@
+[
+  {
+    "id": "pool-01",
+    "difficulty": "easy",
+    "expected": "Database Connection Pool Exhaustion",
+    "incident": "Checkout API returning intermittent 500s since the 2pm deploy. Logs show timeout waiting for connection. DB CPU looks normal."
+  },
+  {
+    "id": "pool-02",
+    "difficulty": "medium",
+    "expected": "Database Connection Pool Exhaustion",
+    "incident": "Orders service is hanging on most requests. The Postgres dashboard shows 100 connections from order-service, most of them idle in transaction, but database load is low."
+  },
+  {
+    "id": "pool-03",
+    "difficulty": "medium",
+    "expected": "Database Connection Pool Exhaustion",
+    "incident": "Since we shipped the new reporting endpoint, users get sporadic 'could not acquire connection' errors at peak hours. The database server itself has plenty of headroom."
+  },
+  {
+    "id": "api-01",
+    "difficulty": "easy",
+    "expected": "Third-Party API Timeout Cascade",
+    "incident": "Our payment provider is responding really slowly and now our whole API is timing out, even endpoints that have nothing to do with payments."
+  },
+  {
+    "id": "api-02",
+    "difficulty": "medium",
+    "expected": "Third-Party API Timeout Cascade",
+    "incident": "All gunicorn workers are busy and requests are queuing. Traces show each worker stuck for 30+ seconds waiting on the shipping-rates service we call."
+  },
+  {
+    "id": "api-03",
+    "difficulty": "hard",
+    "expected": "Third-Party API Timeout Cascade",
+    "incident": "API requests are timing out and the thread pool is saturated. Outbound calls to our address-validation vendor are taking around 60 seconds. The database looks fine."
+  },
+  {
+    "id": "oom-01",
+    "difficulty": "easy",
+    "expected": "Memory Leak Causing OOM Restarts",
+    "incident": "Kubernetes keeps restarting the search pods with OOMKilled. Memory climbs steadily for about 6 hours after each restart."
+  },
+  {
+    "id": "oom-02",
+    "difficulty": "medium",
+    "expected": "Memory Leak Causing OOM Restarts",
+    "incident": "The background worker's RSS grows from 300MB to 2GB over the course of a day, then it crashes and systemd restarts it."
+  },
+  {
+    "id": "oom-03",
+    "difficulty": "hard",
+    "expected": "Memory Leak Causing OOM Restarts",
+    "incident": "Latency on the recommendations service gets worse the longer it runs, and every night around 3am the process dies and comes back. It's been happening since we added in-process caching of user profiles."
+  },
+  {
+    "id": "cache-01",
+    "difficulty": "easy",
+    "expected": "Stale Cache Serving Incorrect Data",
+    "incident": "Customers are seeing old prices on product pages an hour after we updated them. The database has the new values."
+  },
+  {
+    "id": "cache-02",
+    "difficulty": "medium",
+    "expected": "Stale Cache Serving Incorrect Data",
+    "incident": "A user changed their email address but their profile page still shows the old one, even though the database row is updated. Flushing Redis fixes it."
+  },
+  {
+    "id": "cache-03",
+    "difficulty": "hard",
+    "expected": "Stale Cache Serving Incorrect Data",
+    "incident": "After the nightly price update job ran, some users see the new prices and some see yesterday's, depending on which server handles their request."
+  },
+  {
+    "id": "deploy-01",
+    "difficulty": "easy",
+    "expected": "Deployment Rollback Failure",
+    "incident": "We rolled back last night's release but the errors continue. Some pods are still running v2.4 and others are on v2.3."
+  },
+  {
+    "id": "deploy-02",
+    "difficulty": "medium",
+    "expected": "Deployment Rollback Failure",
+    "incident": "The rollback went out but the old code crashes on startup because the new migration dropped a column it still reads."
+  },
+  {
+    "id": "deploy-03",
+    "difficulty": "hard",
+    "expected": "Deployment Rollback Failure",
+    "incident": "Error rate jumped after this morning's deploy. We triggered a rollback 20 minutes ago but the errors haven't gone away."
+  },
+  {
+    "id": "none-01",
+    "difficulty": "out-of-scope",
+    "expected": null,
+    "incident": "The TLS certificate on api.example.com expired and browsers are showing a security warning to customers."
+  },
+  {
+    "id": "none-02",
+    "difficulty": "out-of-scope",
+    "expected": null,
+    "incident": "Our DNS provider is having an outage and our domain isn't resolving for some users."
+  }
+]
