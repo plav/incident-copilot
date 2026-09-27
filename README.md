@@ -4,7 +4,7 @@ An AI assistant for on-call engineers. Describe a production incident in plain E
 
 Built with **FastAPI**, **PostgreSQL + pgvector**, and **local LLMs via Ollama**, so it runs entirely on a laptop at zero cost. The embedding and LLM layers are provider-agnostic, and **AWS Bedrock** is supported as a drop-in alternative.
 
-> **Status:** retrieval-augmented generation (RAG) pipeline complete: ingestion, semantic search and structured triage. Next up: an evaluation set, then agentic tool-calling. See [Roadmap](#roadmap).
+> **Status:** RAG pipeline complete and evaluated: **88% triage accuracy** on a 17-incident labelled eval set with a free local 7B model. Next up: out-of-scope detection, then agentic tool-calling. See [Roadmap](#roadmap).
 
 ---
 
@@ -108,7 +108,7 @@ flowchart LR
 
 ### 1. Clone and install
 ```bash
-git clone https://github.com/<your-username>/incident-copilot.git
+git clone https://github.com/plav/incident-copilot.git
 cd incident-copilot
 python3 -m venv venv
 source venv/bin/activate
@@ -192,11 +192,45 @@ Switching provider is a config change plus `python -m scripts.ingest --force`. N
 
 **Constrain citations with the schema.** Early outputs cited runbooks by slightly wrong names, which broke citation matching. The JSON schema sent to the model now restricts `runbook` to an enum of the retrieved titles, so the model *can't* produce an invalid citation. A server-side check remains as a safety net.
 
-**Model size mattered more than prompt tweaks.** With identical code and prompt, `llama3.2` (3B) diagnosed the example incident as a third-party API timeout. It misread symptoms from a runbook as facts about the incident. `qwen2.5:7b` correctly identified connection pool exhaustion. This is the motivation for the evaluation set on the roadmap.
+**Model size mattered more than prompt tweaks.** With identical code and prompt, `llama3.2` (3B) diagnosed the example incident as a third-party API timeout. It misread symptoms from a runbook as facts about the incident. `qwen2.5:7b` correctly identified connection pool exhaustion. Across the full [eval set](#evaluation), that's 88% vs 59% triage accuracy, at roughly twice the latency.
 
 **Provider-agnostic from the start.** Embeddings and the LLM sit behind small interfaces (`app/embeddings.py`, `app/llm.py`), selected by config. This allowed development against a fake embedder before any model was available, a switch to free local models, and keeps Bedrock one config change away.
 
 **Idempotent ingestion.** A unique key on `(source_file, chunk_index)` plus a SHA-256 content hash means re-running ingestion upserts only changed chunks and removes chunks from deleted or shortened runbooks.
+
+---
+
+## Evaluation
+
+`evals/incidents.json` holds 17 labelled incidents: three per runbook at easy, medium and hard difficulty, plus two out-of-scope incidents (an expired TLS certificate and a DNS outage) that no runbook covers. The hard cases deliberately use symptoms that overlap with other runbooks.
+
+```bash
+python -m scripts.eval --retrieval-only              # fast, no LLM
+python -m scripts.eval                               # full triage
+OLLAMA_CHAT_MODEL=llama3.2 python -m scripts.eval    # compare another model
+```
+
+**Metrics**
+- **Retrieval hit@1 / hit@3:** is the expected runbook ranked first / in the top 3 by vector search?
+- **Triage accuracy:** does the top likely cause cite the expected runbook? For out-of-scope incidents, a correct answer is one with no medium- or high-confidence cause.
+
+**Results** (embeddings: `mxbai-embed-large`, 17 cases)
+
+| | Qwen 2.5 7B | Llama 3.2 3B |
+|---|---|---|
+| **Triage accuracy** | **15/17 (88%)** | 10/17 (59%) |
+| Easy / medium / hard | 5/5 · 6/6 · 3/4 | 3/5 · 4/6 · 3/4 |
+| Out-of-scope | 1/2 | 0/2 |
+| Avg time per triage (M-series MacBook Air, 16GB) | 29s | 15s |
+
+Retrieval: **hit@1 13/15 (87%)**, **hit@3 14/15 (93%)**.
+
+**What the numbers show**
+- **The LLM step recovers retrieval mistakes.** On `api-03`, vector search ranked the wrong runbook first, but Qwen compared all three candidates and picked the right one. That's why the pipeline passes the top 3 runbooks instead of trusting the top hit.
+- **Retrieval sets the ceiling.** On `oom-03`, the correct runbook wasn't in the top 3, so no model could answer correctly. Further gains there have to come from retrieval.
+- **Out-of-scope detection is the weakest area.** Both models mapped the expired-certificate incident to an unrelated runbook with confidence.
+
+Results for each run are saved to `evals/results/`.
 
 ---
 
@@ -215,8 +249,12 @@ incident-copilot/
 ├── db/
 │   └── init.sql         # pgvector extension, runbook_chunks table, HNSW index
 ├── runbooks/            # Markdown knowledge base
+├── evals/
+│   ├── incidents.json   # Labelled test incidents
+│   └── results/         # Saved eval runs
 ├── scripts/
-│   └── ingest.py        # Chunk, embed and upsert runbooks
+│   ├── ingest.py        # Chunk, embed and upsert runbooks
+│   └── eval.py          # Score retrieval and triage against the eval set
 ├── docker-compose.yml   # Postgres 16 + pgvector
 └── requirements.txt
 ```
@@ -231,7 +269,9 @@ incident-copilot/
 - [x] Semantic search endpoint
 - [x] Structured triage endpoint with constrained citations
 - [x] Free local inference via Ollama
-- [ ] **Evaluation set:** labelled incidents to measure retrieval and triage accuracy, and compare models and prompts
+- [x] Evaluation set: 17 labelled incidents scoring retrieval and triage, with model comparison
+- [ ] **Out-of-scope detection:** similarity threshold so the system says "no matching runbook" instead of guessing
+- [ ] Improve retrieval on the remaining miss (query prefix for the embedding model, hybrid keyword + vector search)
 - [ ] Expand the runbook knowledge base (5 → 15–20), including deliberately overlapping topics
 - [ ] **Agentic tool-calling:** let the model check service status, query logs and inspect recent deploys before diagnosing
 - [ ] Tests and CI
